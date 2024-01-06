@@ -9,34 +9,34 @@ type Content struct {
 }
 
 type Message struct {
-	contents []Content
+	Contents []Content `json:"Contents"`
 }
 
 func NewMessage() *Message {
-	return &Message{contents: make([]Content, 0)}
+	return &Message{Contents: make([]Content, 0)}
 }
 
 /** 消息包是否为空 */
 func (receiver Message) IsEmpty() bool {
-	return len(receiver.contents) == 0
+	return len(receiver.Contents) == 0
 }
 
 /** 清空消息包 */
 func (receiver *Message) Clear() {
-	receiver.contents = make([]Content, 0)
+	receiver.Contents = make([]Content, 0)
 }
 
 /** 添加多个消息 */
 func (receiver *Message) Add(message Message) {
-	receiver.contents = append(receiver.contents, message.contents...)
+	receiver.Contents = append(receiver.Contents, message.Contents...)
 }
 
 /** 添加一个消息 */
 func (receiver *Message) AddContent(content Content) {
-	receiver.contents = append(receiver.contents, content)
+	receiver.Contents = append(receiver.Contents, content)
 }
 
 /** 添加一个消息 */
 func (receiver *Message) GetContents() []Content {
-	return receiver.contents
+	return receiver.Contents
 }

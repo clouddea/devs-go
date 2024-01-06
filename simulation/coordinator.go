@@ -28,6 +28,8 @@ func NewCoordinator(devs modeling.Coupled, parent Processor) *Coordinator {
 			cor.processors[component] = NewSimulator(component.(modeling.Atomic), cor)
 		case modeling.Coupled:
 			cor.processors[component] = NewCoordinator(component.(modeling.Coupled), cor)
+		case *modeling.EntityRemote:
+			cor.processors[component] = NewProcessorStub(component.(*modeling.EntityRemote).EndPoint())
 		}
 	}
 	return cor

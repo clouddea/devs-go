@@ -15,5 +15,6 @@ func main() {
 	coupled.AddComponent(trans)
 	coupled.AddCoupling(genr, "out", trans, "in")
 	coordinator := simulation.NewCoordinator(coupled, nil)
-	coordinator.Simulate(1*time.Second, true)
+	root := simulation.NewRoot(coordinator)
+	root.Simulate(1*time.Second, true)
 }

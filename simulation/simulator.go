@@ -2,8 +2,6 @@ package simulation
 
 import (
 	"devs-go/modeling"
-	"fmt"
-	"time"
 )
 
 /*
@@ -60,16 +58,4 @@ func (receiver *Simulator) PutMessage(message modeling.Message, t uint64) {
 
 func (receiver *Simulator) GetTN() uint64 {
 	return receiver.tn
-}
-
-func (receiver *Simulator) Simulate(delay time.Duration, verbose bool) {
-	receiver.Init(0)
-	for receiver.tl < modeling.INFINITE {
-		receiver.ComputeOutput(receiver.tn)
-		receiver.Advance(receiver.tn)
-		if verbose {
-			fmt.Printf("time advance: %v \n", receiver.tl)
-		}
-		time.Sleep(delay)
-	}
 }

@@ -2,9 +2,7 @@ package simulation
 
 import (
 	"devs-go/modeling"
-	"fmt"
 	"sync"
-	"time"
 )
 
 type Coordinator struct {
@@ -122,17 +120,5 @@ func (receiver *Coordinator) PutMessage(message modeling.Message, t uint64) {
 			}
 			processor.PutMessage(newMessage, t)
 		}
-	}
-}
-
-func (receiver *Coordinator) Simulate(delay time.Duration, verbose bool) {
-	receiver.Init(0)
-	for receiver.tl < modeling.INFINITE {
-		receiver.ComputeOutput(receiver.tn)
-		receiver.Advance(receiver.tn)
-		if verbose {
-			fmt.Printf("time advance: %v \n", receiver.tl)
-		}
-		time.Sleep(delay)
 	}
 }

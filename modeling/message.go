@@ -35,3 +35,8 @@ func (receiver *Message) Add(message Message) {
 func (receiver *Message) AddContent(content Content) {
 	receiver.contents = append(receiver.contents, content)
 }
+
+/** 添加一个消息 */
+func (receiver *Message) GetContents() []Content {
+	return receiver.contents
+}

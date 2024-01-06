@@ -1,54 +1,83 @@
 package modeling
 
 type Coupled interface {
-	AddComponent(atomic Atomic)
-	AddCoupling(from Atomic, fromPort string, to Atomic, toPort string)
-	GetComponents() []Atomic
-	GetCoupling(from Atomic) []Atomic
+	Entity
+	AddComponent(entity Entity)
+	AddCoupling(from Entity, fromPort string, to Entity, toPort string)
+	GetComponents() []Entity
+	GetComponentMap() map[string]Entity
+	GetCoupling(from Entity, port string) []Pair
 }
 
-type pair struct {
-	component Atomic
-	port      string
+type Pair struct {
+	Component Entity
+	Port      string
 }
 
 type AbstractCoupled struct {
-	components []Atomic
-	couplings  map[Atomic]map[string][]pair
+	components map[string]Entity
+	couplings  map[string]map[string][]Pair
 	name       string
 }
 
-func (receiver *AbstractCoupled) AddComponent(atomic Atomic) {
-	receiver.components = append(receiver.components, atomic)
+func (receiver AbstractCoupled) Name() string {
+	return receiver.name
 }
 
-func (receiver *AbstractCoupled) AddCoupling(from Atomic, fromPort string, to Atomic, toPort string) {
-	if receiver.couplings == nil {
-		receiver.couplings = make(map[Atomic]map[string][]pair)
+func (receiver *AbstractCoupled) SetName(name string) {
+	receiver.name = name
+}
+
+func (receiver *AbstractCoupled) AddComponent(entity Entity) {
+	if receiver.components == nil {
+		receiver.components = make(map[string]Entity)
 	}
-	portMap := receiver.couplings[from]
+	receiver.components[entity.Name()] = entity
+}
+
+func (receiver *AbstractCoupled) AddCoupling(from Entity, fromPort string, to Entity, toPort string) {
+	// 当组件不是子组件也不是当前组件时，忽略
+	if _, ok := receiver.components[from.Name()]; !ok && from.Name() != receiver.Name() {
+		return
+	}
+	if _, ok := receiver.components[to.Name()]; !ok && to.Name() != receiver.Name() {
+		return
+	}
+	// 添加耦合关系
+	if receiver.couplings == nil {
+		receiver.couplings = make(map[string]map[string][]Pair)
+	}
+	portMap := receiver.couplings[from.Name()]
 	if portMap == nil {
-		portMap = make(map[string][]pair)
-		receiver.couplings[from] = portMap
+		portMap = make(map[string][]Pair)
+		receiver.couplings[from.Name()] = portMap
 	}
 
-	val := pair{to, toPort}
+	val := Pair{to, toPort}
 	portMap[fromPort] = append(portMap[fromPort], val)
 }
 
-func (receiver *AbstractCoupled) GetComponents() []Atomic {
+func (receiver *AbstractCoupled) GetComponents() []Entity {
+	var components []Entity
+	for _, v := range receiver.components {
+		components = append(components, v)
+	}
+	return components
+}
+
+func (receiver *AbstractCoupled) GetComponentMap() map[string]Entity {
+	if receiver.components == nil {
+		receiver.components = make(map[string]Entity)
+	}
 	return receiver.components
 }
 
-func (receiver *AbstractCoupled) GetCoupling(from Atomic) []Atomic {
-	var results []Atomic = nil
-	if receiver.couplings[from] != nil {
-		var portMap = receiver.couplings[from]
-		for _, pairs := range portMap {
-			for _, p := range pairs {
-				results = append(results, p.component)
-			}
-		}
+func (receiver *AbstractCoupled) GetCoupling(from Entity, fromPort string) (results []Pair) {
+	results = make([]Pair, 0)
+	var portMap = receiver.couplings[from.Name()]
+	if portMap == nil {
+		return
 	}
-	return results
+	results = portMap[fromPort]
+	return
 }

@@ -37,9 +37,9 @@ func (receiver *Generator) On(e uint64, message modeling.Message) {
 	}
 }
 
-func (receiver Generator) Out() modeling.Message {
+func (receiver *Generator) Out() modeling.Message {
 	msg := *modeling.NewMessage()
-	msg.AddContent(modeling.Content{})
+	msg.AddContent(*receiver.MakeContent("out", "data "+strconv.Itoa(receiver.count)))
 	fmt.Println(receiver.Name() + " out count" + strconv.Itoa(receiver.count) + ", state is " + receiver.State)
 	return msg
 }

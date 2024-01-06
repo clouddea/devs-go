@@ -9,11 +9,11 @@ const (
 )
 
 type Atomic interface {
+	Entity
 	Init()
 	On(e uint64, message Message)
 	Out() Message
 	Ta() uint64
-	Name() string
 }
 
 type AbstractAtomic struct {
@@ -53,7 +53,7 @@ func (receiver *AbstractAtomic) On(e uint64, message Message) {
 	}
 }
 
-func (receiver AbstractAtomic) Out() (message Message) {
+func (receiver *AbstractAtomic) Out() (message Message) {
 	return *NewMessage()
 }
 

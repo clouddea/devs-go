@@ -1,23 +1,38 @@
 package simulation
 
-import "devs-go/modeling"
+import (
+	"devs-go/modeling"
+	"fmt"
+	"sync"
+	"time"
+)
 
 type Coordinator struct {
 	devs       modeling.Coupled
-	processors map[modeling.Atomic]Processor
+	processors map[modeling.Entity]Processor
 	tl         uint64
 	tn         uint64
 	parent     Processor
 }
 
 func NewCoordinator(devs modeling.Coupled, parent Processor) *Coordinator {
-	return &Coordinator{
+	cor := &Coordinator{
 		devs:       devs,
-		processors: make(map[modeling.Atomic]Processor),
+		processors: make(map[modeling.Entity]Processor),
 		tl:         0,
 		tn:         0,
 		parent:     parent,
 	}
+	// 为子组件生成对应的处理器
+	for _, component := range devs.GetComponents() {
+		switch component.(type) {
+		case modeling.Atomic:
+			cor.processors[component] = NewSimulator(component.(modeling.Atomic), cor)
+		case modeling.Coupled:
+			cor.processors[component] = NewCoordinator(component.(modeling.Coupled), cor)
+		}
+	}
+	return cor
 }
 
 func (receiver *Coordinator) getTN() uint64 {
@@ -31,41 +46,93 @@ func (receiver *Coordinator) getTN() uint64 {
 	return tn
 }
 
+func (receiver *Coordinator) sentAllMessage(callable func(item Processor)) {
+	var semaphore sync.WaitGroup
+	semaphore.Add(len(receiver.processors))
+	for _, proc := range receiver.processors {
+		go func(p Processor) {
+			callable(p)
+			semaphore.Done()
+		}(proc)
+	}
+	semaphore.Wait()
+}
+
 func (receiver *Coordinator) GetTN() uint64 {
 	return receiver.tn
 }
 
 func (receiver *Coordinator) Init(t uint64) {
-	for _, v := range receiver.processors {
-		v.Init(t)
-	}
+	receiver.sentAllMessage(func(item Processor) {
+		item.Init(t)
+	})
 	receiver.tl = t
 	receiver.tn = receiver.getTN()
 }
 
-func (receiver *Coordinator) Advance(count int, t uint64) {
-	// IMM: 子组件中即将发生内部转移的
-	// INF： Ii, 其中i 属于 IMM + {SELF}
-	// 计算IMM+INF-SELF
-	children := make(map[Processor]bool)
-	for k, v := range receiver.processors {
-		if t == v.GetTN() {
-			children[v] = true
-			influencors := receiver.devs.GetCoupling(k)
-			for _, inf := range influencors {
-				infProc := receiver.processors[inf]
-				children[infProc] = true // TODO: exclude self
-			}
-		}
-	}
-	for _, child := range children {
-		// 计算每个子组件对应的 influencer个数, 即影响它的组件
-
-	}
-
+func (receiver *Coordinator) Advance(t uint64) {
+	// 不需要区分IMM和INF，直接通知所有子组件发生时间推进
+	receiver.sentAllMessage(func(item Processor) {
+		item.Advance(t)
+	})
+	receiver.tl = t
+	receiver.tn = receiver.getTN()
 }
 
-//func (receiver *Coordinator) putMessage(message modeling.Message, t uint64) {
-//	receiver.input.Add(message)
-//	receiver.semaphore.Done()
-//}
+func (receiver *Coordinator) ComputeOutput(t uint64) {
+	if t == receiver.tn {
+		// sent to child
+		receiver.sentAllMessage(func(item Processor) {
+			item.ComputeOutput(t)
+		})
+	}
+}
+
+func (receiver *Coordinator) PutMessage(message modeling.Message, t uint64) {
+	if message.IsEmpty() {
+		return
+	}
+	contents := message.GetContents()
+	var source string = contents[0].Source
+	var sourcePort string = contents[0].SourcePort
+	// 假定消息源是当前耦合模型，如果找到某个子组件名字与source一样，则说明消息源是子组件
+	var entity modeling.Entity = receiver.devs
+	if component, ok := receiver.devs.GetComponentMap()[source]; ok {
+		entity = component
+	}
+
+	pairs := receiver.devs.GetCoupling(entity, sourcePort)
+	for _, pair := range pairs {
+		var processor Processor = nil
+		if pair.Component.Name() == receiver.devs.Name() {
+			processor = receiver.parent
+		} else {
+			processor = receiver.processors[pair.Component]
+		}
+		// 发送消息
+		if processor != nil {
+			// 改变消息源
+			var newMessage modeling.Message
+			for _, content := range message.GetContents() {
+				newMessage.AddContent(modeling.Content{
+					Source:     pair.Component.Name(),
+					SourcePort: pair.Port,
+					Payload:    content.Payload,
+				})
+			}
+			processor.PutMessage(newMessage, t)
+		}
+	}
+}
+
+func (receiver *Coordinator) Simulate(delay time.Duration, verbose bool) {
+	receiver.Init(0)
+	for receiver.tl < modeling.INFINITE {
+		receiver.ComputeOutput(receiver.tn)
+		receiver.Advance(receiver.tn)
+		if verbose {
+			fmt.Printf("time advance: %v \n", receiver.tl)
+		}
+		time.Sleep(delay)
+	}
+}

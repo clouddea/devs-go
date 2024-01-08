@@ -1,7 +1,7 @@
 package simulation
 
 import (
-	"devs-go/modeling"
+	"github.com/clouddea/devs-go/modeling"
 	"log"
 	"net/rpc"
 	"sync"

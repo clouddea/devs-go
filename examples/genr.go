@@ -1,8 +1,8 @@
 package examples
 
 import (
-	"devs-go/modeling"
 	"fmt"
+	"github.com/clouddea/devs-go/modeling"
 	"strconv"
 )
 

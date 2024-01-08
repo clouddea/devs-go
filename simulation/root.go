@@ -1,8 +1,8 @@
 package simulation
 
 import (
-	"devs-go/modeling"
 	"fmt"
+	"github.com/clouddea/devs-go/modeling"
 	"log"
 	"net"
 	"net/http"

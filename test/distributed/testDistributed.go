@@ -1,8 +1,8 @@
 package main
 
 import (
-	"devs-go/modeling"
-	"devs-go/simulation"
+	"github.com/clouddea/devs-go/modeling"
+	"github.com/clouddea/devs-go/simulation"
 	"time"
 )
 

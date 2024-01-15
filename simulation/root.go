@@ -13,6 +13,7 @@ import (
 type Root struct {
 	processor Processor
 	t         uint64
+	inited    bool
 }
 
 type RootTimeArg struct {
@@ -28,6 +29,7 @@ func NewRoot(processor Processor) *Root {
 	return &Root{
 		processor: processor,
 		t:         0,
+		inited:    false,
 	}
 }
 
@@ -56,16 +58,30 @@ func (this *Root) GetTN(input *RootTimeArg, output *RootTimeArg) error {
 	return nil
 }
 
+func (receiver *Root) Setup() {
+	receiver.processor.Init(0)
+}
+
+func (receiver *Root) Step() uint64 {
+	if receiver.t < modeling.INFINITE {
+		tn := receiver.processor.GetTN()
+		receiver.processor.ComputeOutput(tn)
+		receiver.processor.Advance(tn)
+		receiver.t = tn
+	}
+	return receiver.t
+}
+
 /** 启动仿真 */
-func (receiver *Root) Simulate(delay time.Duration, verbose bool) {
+func (receiver *Root) Simulate(delay time.Duration, stepsCallback func(t uint64)) {
 	receiver.processor.Init(0)
 	for receiver.t < modeling.INFINITE {
 		tn := receiver.processor.GetTN()
 		receiver.processor.ComputeOutput(tn)
 		receiver.processor.Advance(tn)
 		receiver.t = tn
-		if verbose {
-			fmt.Printf("time advance: %v \n", receiver.t)
+		if stepsCallback != nil {
+			stepsCallback(receiver.t)
 		}
 		time.Sleep(delay)
 	}

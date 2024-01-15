@@ -2,6 +2,7 @@ package simulation
 
 import (
 	"github.com/clouddea/devs-go/modeling"
+	"sync"
 )
 
 /*
@@ -14,6 +15,7 @@ type Simulator struct {
 	tl     uint64
 	tn     uint64
 	parent Processor
+	lock   sync.Mutex
 }
 
 func NewSimulator(atomic modeling.Atomic, parent Processor) *Simulator {
@@ -47,13 +49,16 @@ func (receiver *Simulator) ComputeOutput(t uint64) {
 		// sent to parent
 		msg := receiver.atomic.Out()
 		if receiver.parent != nil {
+			// TODO: 判断是否为空，如果为空，则不发送
 			receiver.parent.PutMessage(msg, t)
 		}
 	}
 }
 
 func (receiver *Simulator) PutMessage(message modeling.Message, t uint64) {
+	receiver.lock.Lock() // 防止丢消息
 	receiver.input.Add(message)
+	receiver.lock.Unlock()
 }
 
 func (receiver *Simulator) GetTN() uint64 {

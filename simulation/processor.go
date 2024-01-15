@@ -18,7 +18,7 @@ type Processor interface {
 type ProcessorStub struct {
 	client   *rpc.Client
 	endpoint string
-	lock     sync.Mutex
+	lock     sync.Mutex // TODO：后续试着去掉，因为init时会保证client一定会存在。但用于parent时，需要进一步修改
 }
 
 func NewProcessorStub(endpoint string) *ProcessorStub {

@@ -5,5 +5,10 @@
 ## OS
 .DS_Store
 
+## Project
+WebView2Loader.dll
+WebView2Loader.dll.lib
+WebView2LoaderStatic.lib
+
 
 

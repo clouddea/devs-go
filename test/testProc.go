@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/clouddea/devs-go/examples"
 	"github.com/clouddea/devs-go/modeling"
 	"github.com/clouddea/devs-go/simulation"
@@ -20,5 +21,7 @@ func main() {
 	coupled.AddCoupling(trans, "out", proc, "in1")
 	coordinator := simulation.NewCoordinator(coupled, nil)
 	root := simulation.NewRoot(coordinator)
-	root.Simulate(1*time.Second, true)
+	root.Simulate(1*time.Second, func(t uint64) {
+		fmt.Printf("time advance: %v \n", t)
+	})
 }

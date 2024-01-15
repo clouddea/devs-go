@@ -78,3 +78,16 @@ time advance: 30
 time advance: 34
 
 ```
+
+# Cell Automate example
+This example only tested on windows 11. Run the commands:
+```shell
+go build -ldflags="-H windowsgui" test/testCA.go
+./testCA.exe
+```
+
+![运行结果](./README.png)
+
+> note: Ensure that `x86_64-13.2.0-release-win32-seh-msvcrt-rt_v11`、 `webview2` and `webview2loader` installed!
+
+

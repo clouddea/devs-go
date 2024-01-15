@@ -89,38 +89,40 @@ func (receiver *Coordinator) ComputeOutput(t uint64) {
 }
 
 func (receiver *Coordinator) PutMessage(message modeling.Message, t uint64) {
+
 	if message.IsEmpty() {
 		return
 	}
 	contents := message.GetContents()
-	var source string = contents[0].Source
-	var sourcePort string = contents[0].SourcePort
-	// 假定消息源是当前耦合模型，如果找到某个子组件名字与source一样，则说明消息源是子组件
-	var entity modeling.Entity = receiver.devs
-	if component, ok := receiver.devs.GetComponentMap()[source]; ok {
-		entity = component
-	}
-
-	pairs := receiver.devs.GetCoupling(entity, sourcePort)
-	for _, pair := range pairs {
-		var processor Processor = nil
-		if pair.Component.Name() == receiver.devs.Name() {
-			processor = receiver.parent
-		} else {
-			processor = receiver.processors[pair.Component]
+	// 对每个content单独路由，因为不同content可能来自不同端口
+	for _, content := range contents {
+		var source string = content.Source
+		var sourcePort string = content.SourcePort
+		// 假定消息源是当前耦合模型，如果找到某个子组件名字与source一样，则说明消息源是子组件
+		var entity modeling.Entity = receiver.devs
+		if component, ok := receiver.devs.GetComponentMap()[source]; ok {
+			entity = component
 		}
-		// 发送消息
-		if processor != nil {
-			// 改变消息源
-			var newMessage modeling.Message
-			for _, content := range message.GetContents() {
+
+		pairs := receiver.devs.GetCoupling(entity, sourcePort)
+		for _, pair := range pairs {
+			var processor Processor = nil
+			if pair.Component.Name() == receiver.devs.Name() {
+				processor = receiver.parent
+			} else {
+				processor = receiver.processors[pair.Component]
+			}
+			// 发送消息
+			if processor != nil {
+				// 改变消息源
+				var newMessage modeling.Message
 				newMessage.AddContent(modeling.Content{
 					Source:     pair.Component.Name(),
 					SourcePort: pair.Port,
 					Payload:    content.Payload,
 				})
+				processor.PutMessage(newMessage, t)
 			}
-			processor.PutMessage(newMessage, t)
 		}
 	}
 }

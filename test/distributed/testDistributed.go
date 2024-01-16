@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/clouddea/devs-go/modeling"
 	"github.com/clouddea/devs-go/simulation"
 	"time"
@@ -21,5 +22,7 @@ func main() {
 	root := simulation.NewRoot(coordinator)
 	go root.Serve("localhost:8080")
 
-	root.Simulate(1*time.Second, true)
+	root.Simulate(1*time.Second, func(t uint64) {
+		fmt.Printf("time advance: %v \n", t)
+	})
 }

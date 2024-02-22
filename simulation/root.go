@@ -77,6 +77,9 @@ func (receiver *Root) Simulate(delay time.Duration, stepsCallback func(t uint64)
 	receiver.processor.Init(0)
 	for receiver.t < modeling.INFINITE {
 		tn := receiver.processor.GetTN()
+		if tn >= modeling.INFINITE {
+			break
+		}
 		receiver.processor.ComputeOutput(tn)
 		receiver.processor.Advance(tn)
 		receiver.t = tn

@@ -65,6 +65,9 @@ func (receiver *Root) Setup() {
 func (receiver *Root) Step() uint64 {
 	if receiver.t < modeling.INFINITE {
 		tn := receiver.processor.GetTN()
+		if tn >= modeling.INFINITE {
+			return tn
+		}
 		receiver.processor.ComputeOutput(tn)
 		receiver.processor.Advance(tn)
 		receiver.t = tn

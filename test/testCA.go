@@ -6,10 +6,11 @@ import (
 	"github.com/clouddea/devs-go/modeling"
 	"github.com/clouddea/devs-go/simulation"
 	webview "github.com/webview/webview_go"
+	"strconv"
 )
 
-const nrows = 20
-const ncols = 20
+const nrows = 40
+const ncols = 40
 
 var states [][]bool
 var atomics [][]modeling.Atomic
@@ -29,27 +30,70 @@ func main() {
 		atomics[i] = make([]modeling.Atomic, ncols)
 	}
 
+	//initStats := []string{
+	//	"    .      .        ",
+	//	"  . .      .        ",
+	//	"   ..      .        ",
+	//	"                    ",
+	//	"                ... ",
+	//	"               ...  ",
+	//	"  ..                ",
+	//	"  ..                ",
+	//	"..                  ",
+	//	"..                  ",
+	//	"       __           ",
+	//	"      _ _           ",
+	//	"                    ",
+	//	"    _ _             ",
+	//	"    __              ",
+	//	"                    ",
+	//	" .                  ",
+	//	"  ..                ",
+	//	"..                  ",
+	//	"  .                 ",
+	//}
+
 	initStats := []string{
-		"    .      .        ",
-		"  . .      .        ",
-		"   ..      .        ",
-		"                    ",
-		"                ... ",
-		"               ...  ",
-		"  ..                ",
-		"  ..                ",
-		"..                  ",
-		"..                  ",
-		"       __           ",
-		"      _ _           ",
-		"                    ",
-		"    _ _             ",
-		"    __              ",
-		"                    ",
-		" .                  ",
-		"  ..                ",
-		"..                  ",
-		"  .                 ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                   .                    ",
+		"                   ..                   ",
+		"                    ..                  ",
+		"                     .                  ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
+		"                                        ",
 	}
 
 	for i := 0; i < nrows; i++ {
@@ -119,13 +163,16 @@ func main() {
 	// 启动窗口
 	w := webview.New(false)
 	defer w.Destroy()
-	w.SetTitle("Bind Example")
-	w.SetSize(400, 400, webview.HintFixed)
+	w.SetTitle("CA")
+	w.SetSize(800, 800, webview.HintFixed)
 	w.Bind("setup", func() {
 		root.Setup()
 	})
+	step := -1
 	w.Bind("step", func() [][]bool {
-		root.Step()
+		if step >= 0 {
+			root.Step()
+		}
 		for i := 0; i < nrows; i++ {
 			for j := 0; j < ncols; j++ {
 				if atomics[i][j].(*examples.CA).State == "alive" {
@@ -135,6 +182,8 @@ func main() {
 				}
 			}
 		}
+		step += 1
+		w.SetTitle("step: " + strconv.Itoa(step))
 		return states
 	})
 
@@ -155,28 +204,44 @@ const html = `
     display: flex;
     flex-wrap: wrap;
     box-sizing: border-box;
+    position: relative;
     /*border: 1px solid red;*/
-    width: 400px;
-    height: 400px
+    width: 800px;
+    height: 800px
   }
 
   .container .box {
 	 width: 20px;
 	 height: 20px;
     box-sizing: border-box;
-    border: 1px solid white;
-    background-color: #FF000023
+    border: 1px solid #B2E5FE;
+    background-color: white
+  }
+
+  .container .label {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    border: 1px solid #00A8FD;
+    background: #B2E5FE;
+    padding: 4px;
+    border-radius: 4px;
   }
 </style>
 </head>
 <body>
-<div id="container" class="container"></div>
+<div id="container" class="container">
+	<div id="label" class="label"></label>
+</div>
 <script>
   var container = document.getElementById("container");
+  var label = document.getElementById("label");
   var boxes = [];
-  for(let i = 0; i < 20; i++){
+  var nrows = 40;
+  var ncols = 40;
+  for(let i = 0; i < nrows; i++){
 	  boxes[i] = []
-      for(let j = 0; j < 20; j++){
+      for(let j = 0; j < ncols; j++){
 		 var element = document.createElement('div');
          element.classList.add('box')
 		 container.appendChild(element);
@@ -185,22 +250,33 @@ const html = `
   }
 
   window.setup().then(() => {
-     container.style.background = "#00FF0050"
+     container.style.background = "white"
   })
-  window.setInterval(() => {
+  var stepCount = -1;
+  var maxStepCount = 63; 
+  var clock = window.setInterval(() => {
+	  if(stepCount > maxStepCount) {
+          return;
+      }
       window.step().then((status) => {
              //alert(status[0][0])
-			for(let i = 0; i < 20; i++){
-				  for(let j = 0; j < 20; j++){
+			for(let i = 0; i < nrows; i++){
+				  for(let j = 0; j < ncols; j++){
                      if(status[i][j]){
                         boxes[i][j].style.background = "black"
                      } else {
-                        boxes[i][j].style.background = "#FF000023"
+                        boxes[i][j].style.background = "white"; // FF000023
                      }
 				  }
             }
+
+            stepCount += 1
+			label.innerText = "steps:" + stepCount
+            if (stepCount >= maxStepCount){
+ 				window.clearInterval(clock);
+			}
       })
-  }, 1000)
+  }, 100)
 </script>
 </body>
 </html>

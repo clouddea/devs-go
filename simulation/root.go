@@ -58,6 +58,11 @@ func (this *Root) GetTN(input *RootTimeArg, output *RootTimeArg) error {
 	return nil
 }
 
+func (receiver *Root) RPCSimulate(input *RootTimeArg, output *RootTimeArg) error {
+	receiver.Simulate(0, nil)
+	return nil
+}
+
 func (receiver *Root) Setup() {
 	receiver.processor.Init(0)
 }

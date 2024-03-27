@@ -43,9 +43,9 @@ func (receiver *DEVStoneAtomic) Out() modeling.Message {
 	// 为了节省内存，只变成1个
 	msg.AddContent(*receiver.MakeContent("out", "data"))
 	//fmt.Printf("%v out count: %v \n", receiver.Name(), len(receiver.list.Contents))
-	//mutex.Lock()
-	//N_EVENTS += 1
-	//mutex.Unlock()
+	mutex.Lock()
+	N_EVENTS += 1
+	mutex.Unlock()
 
 	receiver.list.Clear()
 	return msg
